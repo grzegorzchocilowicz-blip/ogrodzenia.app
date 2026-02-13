@@ -2,1374 +2,283 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Baza klientów – firma ogrodzeniowa</title>
-
-  <!-- DLA TELEFONU / PWA -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#222222" />
-  <link rel="manifest" href="manifest.webmanifest">
-
+  <title>System zleceń ogrodzeń</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { margin-bottom: 5px; }
-    h2 { margin-top: 25px; margin-bottom: 5px; }
-    .subtitle { font-size: 0.9rem; color: #555; margin-bottom: 15px; }
-
-    form {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(220px, 1fr));
-      gap: 10px 20px;
-      margin-bottom: 20px;
-    }
-
-    label { font-size: 0.85rem; display: block; margin-bottom: 3px; }
-    input, select, textarea { width: 100%; padding: 5px; box-sizing: border-box; }
-    textarea { resize: vertical; }
-
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-    th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
-    th { background: #f0f0f0; position: sticky; top: 0; z-index: 1; }
-
-    .full-width { grid-column: 1 / 4; }
-    .actions button { margin-right: 5px; }
-    button { cursor: pointer; }
-
-    .calc-box {
-      border: 1px solid #ddd;
-      padding: 8px;
-      font-size: 0.8rem;
-      background: #fafafa;
-      margin-top: 5px;
-    }
-    .calc-result {
-      margin-top: 5px;
-      font-weight: bold;
-    }
-    .small-note {
-      font-size: 0.75rem;
-      color: #666;
-      margin-top: 2px;
-    }
-    .toolbar {
-      margin-top: 10px;
-      margin-bottom: 5px;
-    }
-    .toolbar label { margin-right: 10px; font-size: 0.85rem; }
-
-    .section-title {
-      font-weight: bold;
-      margin-top: 10px;
-      margin-bottom: 4px;
-    }
-    hr.section {
-      grid-column: 1 / 4;
-      margin: 10px 0;
-      border: none;
-      border-top: 1px solid #ddd;
-    }
-
-    .settings-box {
-      border: 1px solid #ddd;
-      padding: 10px;
-      margin-bottom: 20px;
-      background: #f9f9f9;
-    }
-    .settings-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(180px, 1fr));
-      gap: 10px 20px;
-      margin-bottom: 10px;
-    }
-
-    tr.status-aktywny { background-color: #e8f8e8; }
-    tr.status-potencjalny { background-color: #fff7d6; }
-    tr.status-nieaktywny { background-color: #f0f0f0; color: #666; }
-
-    @media (max-width: 1000px) {
-      form { grid-template-columns: 1fr; }
-      .full-width { grid-column: 1 / 2; }
-      .settings-grid { grid-template-columns: 1fr 1fr; }
-      body { margin: 10px; }
-    }
-    @media (max-width: 600px) {
-      .settings-grid { grid-template-columns: 1fr; }
-    }
+    :root { --bg:#f4f6f8; --card:#fff; --line:#d7dde5; --text:#1f2937; --muted:#6b7280; --ok:#e6f7ed; --warn:#fff6dd; --done:#e8eefc; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Arial, sans-serif; background:var(--bg); color:var(--text); }
+    .container { max-width:1200px; margin:20px auto; padding:0 12px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:14px; }
+    h1,h2,h3 { margin:0 0 10px; }
+    .grid { display:grid; grid-template-columns:repeat(4,minmax(140px,1fr)); gap:10px; }
+    .full { grid-column:1/-1; }
+    label { display:block; font-size:12px; margin-bottom:4px; color:var(--muted); }
+    input, select, textarea, button { width:100%; padding:8px; border:1px solid var(--line); border-radius:8px; font-size:14px; }
+    textarea { min-height:66px; }
+    button { cursor:pointer; background:#111827; color:#fff; }
+    .row { display:flex; gap:8px; flex-wrap:wrap; }
+    .row > * { flex:1; min-width:160px; }
+    .hide { display:none; }
+    .pill { display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; }
+    .s-ready{ background:var(--ok);} .s-todo{ background:var(--warn);} .s-done{ background:var(--done);} 
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th,td { border:1px solid var(--line); padding:6px; vertical-align:top; }
+    th { background:#eef2f7; }
+    .section-ready { background:var(--ok); }
+    .section-todo { background:var(--warn); }
+    .section-done { background:var(--done); }
+    @media (max-width:900px){ .grid{ grid-template-columns:1fr 1fr; } }
+    @media (max-width:600px){ .grid{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
-  <h1>Baza klientów – firma ogrodzeniowa</h1>
-  <div class="subtitle">
-    Baza klientów + konfigurator paneli i bram przesuwnych, osobne rabaty, zaliczka, oferta do druku, wyszukiwarka, filtry oraz podział na: aktywni / potencjalni / nieaktywni.
+<div class="container">
+  <h1>System zleceń ogrodzeń</h1>
+
+  <div class="card">
+    <h2>Cennik materiałów</h2>
+    <div class="row">
+      <button id="savePriceBtn" type="button">Zapisz cennik</button>
+      <button id="loadPriceBtn" type="button">Wczytaj cennik</button>
+      <button id="resetPriceBtn" type="button">Przywróć nowy cennik</button>
+    </div>
+    <div class="grid" id="priceGrid"></div>
   </div>
 
-  <!-- USTAWIENIA DOMYŚLNE -->
-  <div class="settings-box">
-    <h2>Ustawienia domyślne</h2>
-    <div class="settings-grid">
-      <div>
-        <label>Domyślna zaliczka (%)</label>
-        <input type="number" id="settingsDepositPercent" step="1" />
-      </div>
-      <div>
-        <label>Domyślna forma płatności</label>
-        <select id="settingsPaymentMethod">
-          <option value="">– brak –</option>
-          <option value="gotówka">gotówka</option>
-          <option value="przelew">przelew</option>
-          <option value="BLIK">BLIK</option>
-        </select>
-      </div>
-    </div>
-    <button type="button" id="saveSettingsBtn">Zapisz ustawienia domyślne</button>
-    <div class="small-note">
-      Ustawienia zapisywane są w przeglądarce (localStorage) – działają tylko na tym urządzeniu.
-    </div>
-  </div>
+  <div class="card">
+    <h2>Rejestracja / edycja zlecenia</h2>
+    <form id="orderForm">
+      <div class="grid">
+        <div><label>ID zlecenia (auto)</label><input id="orderId" readonly /></div>
+        <div><label>Status zlecenia</label><select id="status"><option>zapytanie</option><option>wycenione</option><option>montaż</option><option>zakończone</option></select></div>
+        <div><label>Sekcja</label><select id="section"><option value="ready">Gotowe do montażu</option><option value="todo">Do ogarnięcia</option><option value="done">Zakończone / rozliczone</option></select></div>
+        <div><label>Ekipa montażowa</label><select id="crew"><option>Ekipa 1</option><option>Ekipa 2</option><option>Ekipa 3</option></select></div>
 
-  <!-- FORMULARZ KLIENTA + KONFIGURATORY -->
-  <form id="client-form">
-    <!-- Dane klienta -->
-    <div>
-      <label>Imię</label>
-      <input type="text" id="firstName" required />
-    </div>
-    <div>
-      <label>Nazwisko / Nazwa firmy</label>
-      <input type="text" id="lastNameOrCompany" />
-    </div>
-    <div>
-      <label>Telefon</label>
-      <input type="text" id="phone" />
-    </div>
-    <div>
-      <label>E-mail</label>
-      <input type="email" id="email" />
-    </div>
-    <div>
-      <label>Ulica</label>
-      <input type="text" id="street" />
-    </div>
-    <div>
-      <label>Kod pocztowy</label>
-      <input type="text" id="postalCode" />
-    </div>
-    <div>
-      <label>Miasto</label>
-      <input type="text" id="city" />
-    </div>
-    <div>
-      <label>Status klienta</label>
-      <select id="statusClient">
-        <option value="aktywny">aktywny</option>
-        <option value="potencjalny">potencjalny</option>
-        <option value="nieaktywny">nieaktywny</option>
-      </select>
-    </div>
-    <div>
-      <label>Data pierwszego kontaktu</label>
-      <input type="date" id="firstContactDate" />
-    </div>
+        <div><label>Klient (imię/firma)</label><input id="clientName" required /></div>
+        <div><label>Telefon</label><input id="phone" /></div>
+        <div><label>Email</label><input id="email" type="email" /></div>
+        <div><label>Adres montażu</label><input id="address" /></div>
 
-    <div>
-      <label>Planowany termin montażu</label>
-      <input type="date" id="plannedDate" />
-    </div>
-    <div>
-      <label>Status zlecenia</label>
-      <select id="orderStatus">
-        <option value="">– wybierz –</option>
-        <option value="wycena">wycena</option>
-        <option value="umowa">umowa</option>
-        <option value="zaliczka wpłacona">zaliczka wpłacona</option>
-        <option value="w realizacji">w realizacji</option>
-        <option value="zakończone">zakończone</option>
-        <option value="reklamacja">reklamacja</option>
-      </select>
-    </div>
-    <div>
-      <label>Typ podłoża / teren</label>
-      <input type="text" id="terrainType" placeholder="np. trawa, kostka, asfalt, spadek terenu" />
-    </div>
+        <div><label>Termin montażu</label><input id="installDate" type="date" /></div>
+        <div><label>Termin wpłaty zaliczki</label><input id="depositDate" type="date" /></div>
+        <div><label>Zaliczka wpłacona (PLN)</label><input id="depositPaid" type="number" step="0.01" value="0" /></div>
+        <div><label>Blok montażu</label><select id="installBlock"><option>1 dzień</option><option>2 dni</option><option>3 dni</option><option>4 dni</option><option>5 dni</option></select></div>
 
-    <hr class="section">
+        <div><label>Rodzaj ogrodzenia</label><input id="fenceType" value="Panelowe" /></div>
+        <div><label>Wysokość paneli</label><select id="panelHeight"><option value="123">123 cm</option><option value="153">153 cm</option><option value="173">173 cm</option></select></div>
+        <div><label>Grubość drutu</label><select id="wire"><option value="4">fi 4 mm</option><option value="5">fi 5 mm</option></select></div>
+        <div><label>Słupek (grubość/height)</label><select id="post"><option value="1.0|200">1,0 mm / 200 cm</option><option value="1.0|230">1,0 mm / 230 cm</option><option value="1.0|260">1,0 mm / 260 cm</option><option value="1.2|200">1,2 mm / 200 cm</option><option value="1.2|230">1,2 mm / 230 cm</option><option value="1.2|260">1,2 mm / 260 cm</option><option value="1.5|200">1,5 mm / 200 cm</option><option value="1.5|230">1,5 mm / 230 cm</option><option value="1.5|260">1,5 mm / 260 cm</option><option value="2.0|200">2,0 mm / 200 cm</option><option value="2.0|230">2,0 mm / 230 cm</option><option value="2.0|260">2,0 mm / 260 cm</option></select></div>
 
-    <!-- KONFIGURATOR PANELI -->
-    <div class="full-width section-title">Konfigurator paneli</div>
+        <div><label>Długość ogrodzenia (m)</label><input id="length" type="number" step="0.01" value="0" /></div>
+        <div><label>Podmurówka (mb)</label><input id="foundation" type="number" step="0.01" value="0" /></div>
+        <div><label>Cena podmurówki za mb (PLN)</label><input id="foundationPrice" type="number" step="0.01" value="25" /></div>
+        <div><label>Koszt robocizny (PLN)</label><input id="labor" type="number" step="0.01" value="0" /></div>
 
-    <div class="full-width">
-      <label>Konfiguracja paneli</label>
-      <select id="panelConfig">
-        <option value="">– wybierz konfigurację paneli –</option>
-      </select>
-      <div class="small-note">
-        Kaseton / podmurówka antracytowa / gładka szara / same panele + słupki.
-      </div>
-    </div>
+        <div><label>Czy brama?</label><select id="hasGate"><option value="nie">nie</option><option value="tak">tak</option></select></div>
+        <div><label>Czy furtka?</label><select id="hasWicket"><option value="nie">nie</option><option value="tak">tak</option></select></div>
+        <div><label>Dodatkowe koszty (PLN)</label><input id="extra" type="number" step="0.01" value="0" /></div>
+        <div><label>Gotowość do montażu</label><select id="ready"><option>tak</option><option>nie</option></select></div>
 
-    <div>
-      <label>Długość ogrodzenia (mb)</label>
-      <input type="number" id="panelLengthMb" step="0.1" />
-      <div class="small-note">
-        Podaj długość ogrodzenia w mb (jeśli nie ma paneli, zostaw puste).
-      </div>
-    </div>
-    <div>
-      <label>Cena paneli za 1 mb (PLN)</label>
-      <input type="number" id="panelPricePerMb" step="0.01" />
-      <div class="small-note">
-        Ustawia się automatycznie po wyborze konfiguracji, możesz zmienić ręcznie.
-      </div>
-    </div>
+        <div class="full hide" id="gateFields">
+          <h3>Brama</h3>
+          <div class="grid">
+            <div><label>Typ</label><input id="gateType" value="przesuwna" /></div>
+            <div><label>Wysokość (cm)</label><input id="gateHeight" type="number" value="150" /></div>
+            <div><label>Szerokość (cm)</label><input id="gateWidth" type="number" value="400" /></div>
+            <div><label>Strona P/L</label><select id="gateSide"><option>prawa</option><option>lewa</option></select></div>
+            <div><label>Profil</label><input id="gateProfile" value="60x40" /></div>
+            <div><label>Koszt bramy (PLN, ręcznie)</label><input id="gateCost" type="number" step="0.01" value="0" /></div>
+          </div>
+        </div>
 
-    <hr class="section">
+        <div class="full hide" id="wicketFields">
+          <h3>Furtka</h3>
+          <div class="grid">
+            <div><label>Typ</label><input id="wicketType" value="panelowa" /></div>
+            <div><label>Wysokość (cm)</label><input id="wicketHeight" type="number" value="150" /></div>
+            <div><label>Szerokość (cm)</label><input id="wicketWidth" type="number" value="100" /></div>
+            <div><label>Strona P/L</label><select id="wicketSide"><option>prawa</option><option>lewa</option></select></div>
+            <div><label>Profil</label><input id="wicketProfile" value="40x40" /></div>
+            <div><label>Koszt furtki (PLN, ręcznie)</label><input id="wicketCost" type="number" step="0.01" value="0" /></div>
+          </div>
+        </div>
 
-    <!-- KONFIGURATOR BRAM -->
-    <div class="full-width section-title">Konfigurator bram przesuwnych</div>
+        <div class="full">
+          <h3>Checklista</h3>
+          <div class="row">
+            <label><input type="checkbox" id="cBefore" /> Przed montażem OK</label>
+            <label><input type="checkbox" id="cDuring" /> W trakcie montażu OK</label>
+            <label><input type="checkbox" id="cAfter" /> Po zakończeniu OK</label>
+          </div>
+        </div>
 
-    <div class="full-width">
-      <label>Konfiguracja bramy przesuwnej</label>
-      <select id="gateConfig">
-        <option value="">– wybierz bramę przesuwną –</option>
-      </select>
-      <div class="small-note">
-        Bramy panelowe przesuwne 3D Fi4mm, różne długości i wysokości.
-      </div>
-    </div>
+        <div class="full">
+          <label>Automatyczne podsumowanie kosztów</label>
+          <input id="summary" readonly />
+        </div>
 
-    <div>
-      <label>Ilość bram (szt.)</label>
-      <input type="number" id="gateCount" step="1" />
-      <div class="small-note">
-        Podaj ilość bram (jeśli brak bram, zostaw puste lub 0).
-      </div>
-    </div>
-    <div>
-      <label>Cena za 1 bramę (PLN)</label>
-      <input type="number" id="gatePricePerGate" step="0.01" />
-      <div class="small-note">
-        Ustawia się automatycznie po wyborze konfiguracji, możesz zmienić ręcznie.
-      </div>
-    </div>
-
-    <hr class="section">
-
-    <!-- KALKULATOR RAZEM -->
-    <div>
-      <label>Rabat na panele (%)</label>
-      <input type="number" id="discountPercent" step="1" value="0" />
-      <div class="small-note">
-        Rabat liczony tylko od kwoty za panele.
-      </div>
-    </div>
-    <div>
-      <label>Rabat na bramy (%)</label>
-      <input type="number" id="gateDiscountPercent" step="1" value="0" />
-      <div class="small-note">
-        Rabat liczony tylko od kwoty za bramy.
-      </div>
-    </div>
-    <div>
-      <label>Procent zaliczki (%)</label>
-      <input type="number" id="depositPercent" step="1" value="30" />
-    </div>
-    <div>
-      <label>Kwota całkowita po rabatach (PLN)</label>
-      <input type="number" id="totalAmount" step="0.01" />
-    </div>
-    <div>
-      <label>Zaliczka (PLN)</label>
-      <input type="number" id="deposit" step="0.01" />
-    </div>
-    <div>
-      <label>Forma płatności</label>
-      <select id="paymentMethod">
-        <option value="">– wybierz –</option>
-        <option value="gotówka">gotówka</option>
-        <option value="przelew">przelew</option>
-        <option value="BLIK">BLIK</option>
-      </select>
-    </div>
-
-    <div class="full-width">
-      <div class="calc-box">
-        <button type="button" id="calcBtn">Przelicz cenę (panele + bramy)</button>
-        <button type="button" id="printOfferBtn" style="margin-left:8px;">Drukuj / PDF – oferta</button>
-        <div class="calc-result" id="calcPreview"></div>
-        <div class="small-note">
-          Liczenie: <br>
-          Panele: <strong>mb × cena/mb – rabat paneli</strong><br>
-          Bramy: <strong>szt. × cena/szt. – rabat bram</strong><br>
-          Razem = panele (po rabacie) + bramy (po rabacie), zaliczka = % od kwoty po rabatach.
+        <div class="full row">
+          <button type="button" id="calcBtn">Przelicz</button>
+          <button type="submit">Zapisz zlecenie</button>
+          <button type="button" id="clearBtn">Nowe / wyczyść</button>
         </div>
       </div>
-    </div>
-
-    <div class="full-width">
-      <label>Notatki techniczne / pomiar</label>
-      <textarea id="measurementNotes" rows="2" placeholder="np. spadki, ilość narożników, utrudnienia, miejsca na bramę itp."></textarea>
-    </div>
-
-    <div class="full-width">
-      <label>Uwagi ogólne (dla klienta / wewnętrzne)</label>
-      <textarea id="notes" rows="2" placeholder="np. preferencje klienta, terminy, ustalenia telefoniczne"></textarea>
-    </div>
-
-    <div class="full-width">
-      <button type="submit">Dodaj / zaktualizuj klienta</button>
-      <button type="button" id="clearForm">Wyczyść formularz</button>
-    </div>
-  </form>
-
-  <!-- Toolbar: eksport + wyszukiwarka + filtry -->
-  <div class="toolbar">
-    <button type="button" id="exportCsvBtn">Eksportuj do CSV (Excel)</button>
-  </div>
-  <div class="toolbar">
-    <label>
-      Wyszukaj:
-      <input type="text" id="searchInput" placeholder="imię, nazwisko, telefon, miasto, uwagi..." />
-    </label>
-    <label>
-      Filtr miasto:
-      <select id="cityFilter">
-        <option value="all">wszystkie</option>
-      </select>
-    </label>
+    </form>
   </div>
 
-  <!-- Tabele podzielone wg statusu -->
-  <h2>Klienci aktywni</h2>
-  <table id="clients-active-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Imię</th>
-        <th>Nazwisko / Firma</th>
-        <th>Telefon</th>
-        <th>E-mail</th>
-        <th>Ulica</th>
-        <th>Kod</th>
-        <th>Miasto</th>
-        <th>Konfiguracja paneli</th>
-        <th>Mb paneli</th>
-        <th>Cena/mb</th>
-        <th>Konfiguracja bramy</th>
-        <th>Ilość bram</th>
-        <th>Cena/bramę</th>
-        <th>Rabat paneli %</th>
-        <th>Rabat bram %</th>
-        <th>Kwota po rabatach</th>
-        <th>Zaliczka</th>
-        <th>Do zapłaty</th>
-        <th>Forma płatności</th>
-        <th>Status klienta</th>
-        <th>Status zlecenia</th>
-        <th>Planowany termin</th>
-        <th>Data 1. kontaktu</th>
-        <th>Typ podłoża</th>
-        <th>Uwagi techniczne</th>
-        <th>Uwagi ogólne</th>
-        <th>Akcje</th>
-      </tr>
-    </thead>
-    <tbody id="clients-active-body"></tbody>
-  </table>
-
-  <h2>Klienci potencjalni</h2>
-  <table id="clients-potential-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Imię</th>
-        <th>Nazwisko / Firma</th>
-        <th>Telefon</th>
-        <th>E-mail</th>
-        <th>Ulica</th>
-        <th>Kod</th>
-        <th>Miasto</th>
-        <th>Konfiguracja paneli</th>
-        <th>Mb paneli</th>
-        <th>Cena/mb</th>
-        <th>Konfiguracja bramy</th>
-        <th>Ilość bram</th>
-        <th>Cena/bramę</th>
-        <th>Rabat paneli %</th>
-        <th>Rabat bram %</th>
-        <th>Kwota po rabatach</th>
-        <th>Zaliczka</th>
-        <th>Do zapłaty</th>
-        <th>Forma płatności</th>
-        <th>Status klienta</th>
-        <th>Status zlecenia</th>
-        <th>Planowany termin</th>
-        <th>Data 1. kontaktu</th>
-        <th>Typ podłoża</th>
-        <th>Uwagi techniczne</th>
-        <th>Uwagi ogólne</th>
-        <th>Akcje</th>
-      </tr>
-    </thead>
-    <tbody id="clients-potential-body"></tbody>
-  </table>
-
-  <h2>Klienci nieaktywni</h2>
-  <table id="clients-inactive-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Imię</th>
-        <th>Nazwisko / Firma</th>
-        <th>Telefon</th>
-        <th>E-mail</th>
-        <th>Ulica</th>
-        <th>Kod</th>
-        <th>Miasto</th>
-        <th>Konfiguracja paneli</th>
-        <th>Mb paneli</th>
-        <th>Cena/mb</th>
-        <th>Konfiguracja bramy</th>
-        <th>Ilość bram</th>
-        <th>Cena/bramę</th>
-        <th>Rabat paneli %</th>
-        <th>Rabat bram %</th>
-        <th>Kwota po rabatach</th>
-        <th>Zaliczka</th>
-        <th>Do zapłaty</th>
-        <th>Forma płatności</th>
-        <th>Status klienta</th>
-        <th>Status zlecenia</th>
-        <th>Planowany termin</th>
-        <th>Data 1. kontaktu</th>
-        <th>Typ podłoża</th>
-        <th>Uwagi techniczne</th>
-        <th>Uwagi ogólne</th>
-        <th>Akcje</th>
-      </tr>
-    </thead>
-    <tbody id="clients-inactive-body"></tbody>
-  </table>
-
-  <script>
-    // =========================
-    // CENNIK PANELI
-    // =========================
-    const PANEL_CONFIGS = {
-      // --- KASETON, słupek 1 mm ---
-      "kaseton_123_4_1":  { label: "123 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 200 cm 1mm",   price: 110 },
-      "kaseton_123_5_1":  { label: "123 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 200 cm 1mm",   price: 125 },
-      "kaseton_153_4_1":  { label: "153 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 230 cm 1mm",   price: 120 },
-      "kaseton_153_5_1":  { label: "153 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 230 cm 1mm",   price: 140 },
-      "kaseton_173_4_1":  { label: "173 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 260 cm 1mm",   price: 135 },
-      "kaseton_173_5_1":  { label: "173 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 260 cm 1mm",   price: 160 },
-
-      // --- KASETON, słupek 1,3 mm ---
-      "kaseton_123_4_1_3": { label: "123 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 200 cm 1,3 mm", price: 115 },
-      "kaseton_123_5_1_3": { label: "123 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 200 cm 1,3 mm", price: 130 },
-      "kaseton_153_4_1_3": { label: "153 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 230 cm 1,3 mm", price: 125 },
-      "kaseton_153_5_1_3": { label: "153 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 230 cm 1,3 mm", price: 145 },
-      "kaseton_173_4_1_3": { label: "173 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 260 cm 1,3 mm", price: 140 },
-      "kaseton_173_5_1_3": { label: "173 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 260 cm 1,3 mm", price: 165 },
-
-      // --- KASETON, słupek 1,5 mm ---
-      "kaseton_123_4_1_5": { label: "123 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 200 cm 1,5 mm", price: 120 },
-      "kaseton_123_5_1_5": { label: "123 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 200 cm 1,5 mm", price: 135 },
-      "kaseton_153_4_1_5": { label: "153 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 230 cm 1,5 mm", price: 130 },
-      "kaseton_153_5_1_5": { label: "153 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 230 cm 1,5 mm", price: 150 },
-      "kaseton_173_4_1_5": { label: "173 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 260 cm 1,5 mm", price: 145 },
-      "kaseton_173_5_1_5": { label: "173 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 260 cm 1,5 mm", price: 170 },
-
-      // --- KASETON, słupek 2 mm ---
-      "kaseton_123_4_2": { label: "123 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 200 cm 2 mm", price: 125 },
-      "kaseton_123_5_2": { label: "123 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 200 cm 2 mm", price: 140 },
-      "kaseton_153_4_2": { label: "153 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 230 cm 2 mm", price: 135 },
-      "kaseton_153_5_2": { label: "153 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 230 cm 2 mm", price: 155 },
-      "kaseton_173_4_2": { label: "173 cm fi 4 mm (7016) + podmurówka kaseton + Słupek 260 cm 2 mm", price: 150 },
-      "kaseton_173_5_2": { label: "173 cm fi 5 mm (7016) + podmurówka kaseton + Słupek 260 cm 2 mm", price: 175 },
-
-      // --- ANTRACYTOWA, słupek 1 mm ---
-      "antracytowa_123_4_1": { label: "123 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 200 cm 1mm", price: 120 },
-      "antracytowa_123_5_1": { label: "123 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 200 cm 1mm", price: 135 },
-      "antracytowa_153_4_1": { label: "153 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 230 cm 1mm", price: 130 },
-      "antracytowa_153_5_1": { label: "153 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 230 cm 1mm", price: 150 },
-      "antracytowa_173_4_1": { label: "173 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 260 cm 1mm", price: 145 },
-      "antracytowa_173_5_1": { label: "173 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 260 cm 1mm", price: 170 },
-
-      // --- ANTRACYTOWA, słupek 1,3 mm ---
-      "antracytowa_123_4_1_3": { label: "123 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 200 cm 1,3 mm", price: 125 },
-      "antracytowa_123_5_1_3": { label: "123 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 200 cm 1,3 mm", price: 140 },
-      "antracytowa_153_4_1_3": { label: "153 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 230 cm 1,3 mm", price: 135 },
-      "antracytowa_153_5_1_3": { label: "153 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 230 cm 1,3 mm", price: 155 },
-      "antracytowa_173_4_1_3": { label: "173 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 260 cm 1,3 mm", price: 150 },
-      "antracytowa_173_5_1_3": { label: "173 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 260 cm 1,3 mm", price: 175 },
-
-      // --- ANTRACYTOWA, słupek 1,5 mm ---
-      "antracytowa_123_4_1_5": { label: "123 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 200 cm 1,5 mm", price: 130 },
-      "antracytowa_123_5_1_5": { label: "123 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 200 cm 1,5 mm", price: 145 },
-      "antracytowa_153_4_1_5": { label: "153 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 230 cm 1,5 mm", price: 140 },
-      "antracytowa_153_5_1_5": { label: "153 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 230 cm 1,5 mm", price: 160 },
-      "antracytowa_173_4_1_5": { label: "173 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 260 cm 1,5 mm", price: 155 },
-      "antracytowa_173_5_1_5": { label: "173 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 260 cm 1,5 mm", price: 180 },
-
-      // --- ANTRACYTOWA, słupek 2 mm ---
-      "antracytowa_123_4_2": { label: "123 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 200 cm 2 mm", price: 135 },
-      "antracytowa_123_5_2": { label: "123 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 200 cm 2 mm", price: 150 },
-      "antracytowa_153_4_2": { label: "153 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 230 cm 2 mm", price: 145 },
-      "antracytowa_153_5_2": { label: "153 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 230 cm 2 mm", price: 165 },
-      "antracytowa_173_4_2": { label: "173 cm fi 4 mm (7016) + podmurówka antracytowa + Słupek 260 cm 2 mm", price: 160 },
-      "antracytowa_173_5_2": { label: "173 cm fi 5 mm (7016) + podmurówka antracytowa + Słupek 260 cm 2 mm", price: 185 },
-
-      // --- GŁADKA SZARA, słupek 1 mm ---
-      "gladkaszara_123_4_1": { label: "123 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 200 cm 1mm", price: 115 },
-      "gladkaszara_123_5_1": { label: "123 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 200 cm 1mm", price: 130 },
-      "gladkaszara_153_4_1": { label: "153 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 230 cm 1mm", price: 125 },
-      "gladkaszara_153_5_1": { label: "153 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 230 cm 1mm", price: 145 },
-      "gladkaszara_173_4_1": { label: "173 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 260 cm 1mm", price: 140 },
-      "gladkaszara_173_5_1": { label: "173 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 260 cm 1mm", price: 165 },
-
-      // --- GŁADKA SZARA, słupek 1,3 mm ---
-      "gladkaszara_123_4_1_3": { label: "123 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 200 cm 1,3 mm", price: 120 },
-      "gladkaszara_123_5_1_3": { label: "123 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 200 cm 1,3 mm", price: 135 },
-      "gladkaszara_153_4_1_3": { label: "153 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 230 cm 1,3 mm", price: 130 },
-      "gladkaszara_153_5_1_3": { label: "153 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 230 cm 1,3 mm", price: 150 },
-      "gladkaszara_173_4_1_3": { label: "173 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 260 cm 1,3 mm", price: 145 },
-      "gladkaszara_173_5_1_3": { label: "173 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 260 cm 1,3 mm", price: 170 },
-
-      // --- GŁADKA SZARA, słupek 1,5 mm ---
-      "gladkaszara_123_4_1_5": { label: "123 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 200 cm 1,5 mm", price: 125 },
-      "gladkaszara_123_5_1_5": { label: "123 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 200 cm 1,5 mm", price: 140 },
-      "gladkaszara_153_4_1_5": { label: "153 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 230 cm 1,5 mm", price: 135 },
-      "gladkaszara_153_5_1_5": { label: "153 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 230 cm 1,5 mm", price: 155 },
-      "gladkaszara_173_4_1_5": { label: "173 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 260 cm 1,5 mm", price: 150 },
-      "gladkaszara_173_5_1_5": { label: "173 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 260 cm 1,5 mm", price: 175 },
-
-      // --- GŁADKA SZARA, słupek 2 mm ---
-      "gladkaszara_123_4_2": { label: "123 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 200 cm 2 mm", price: 130 },
-      "gladkaszara_123_5_2": { label: "123 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 200 cm 2 mm", price: 145 },
-      "gladkaszara_153_4_2": { label: "153 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 230 cm 2 mm", price: 140 },
-      "gladkaszara_153_5_2": { label: "153 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 230 cm 2 mm", price: 160 },
-      "gladkaszara_173_4_2": { label: "173 cm fi 4 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 260 cm 2 mm", price: 155 },
-      "gladkaszara_173_5_2": { label: "173 cm fi 5 mm (7016) + Podmurówka obustronnie gładka szara + Słupek 260 cm 2 mm", price: 180 },
-
-      // --- BEZ PODMURÓWKI, słupek 1 mm ---
-      "bezpodmur_123_4_1": { label: "123 cm fi 4 mm (7016) + Słupek 200 cm 1mm", price: 90 },
-      "bezpodmur_123_5_1": { label: "123 cm fi 5 mm (7016) + Słupek 200 cm 1mm", price: 105 },
-      "bezpodmur_153_4_1": { label: "153 cm fi 4 mm (7016) + Słupek 230 cm 1mm", price: 100 },
-      "bezpodmur_153_5_1": { label: "153 cm fi 5 mm (7016) + Słupek 230 cm 1mm", price: 120 },
-      "bezpodmur_173_4_1": { label: "173 cm fi 4 mm (7016) + Słupek 260 cm 1mm", price: 115 },
-      "bezpodmur_173_5_1": { label: "173 cm fi 5 mm (7016) + Słupek 260 cm 1mm", price: 140 },
-
-      // --- BEZ PODMURÓWKI, słupek 1,3 mm ---
-      "bezpodmur_123_4_1_3": { label: "123 cm fi 4 mm (7016) + Słupek 200 cm 1,3 mm", price: 95 },
-      "bezpodmur_123_5_1_3": { label: "123 cm fi 5 mm (7016) + Słupek 200 cm 1,3 mm", price: 110 },
-      "bezpodmur_153_4_1_3": { label: "153 cm fi 4 mm (7016) + Słupek 230 cm 1,3 mm", price: 105 },
-      "bezpodmur_153_5_1_3": { label: "153 cm fi 5 mm (7016) + Słupek 230 cm 1,3 mm", price: 125 },
-      "bezpodmur_173_4_1_3": { label: "173 cm fi 4 mm (7016) + Słupek 260 cm 1,3 mm", price: 120 },
-      "bezpodmur_173_5_1_3": { label: "173 cm fi 5 mm (7016) + Słupek 260 cm 1,3 mm", price: 145 },
-
-      // --- BEZ PODMURÓWKI, słupek 1,5 mm ---
-      "bezpodmur_123_4_1_5": { label: "123 cm fi 4 mm (7016) + Słupek 200 cm 1,5 mm", price: 100 },
-      "bezpodmur_123_5_1_5": { label: "123 cm fi 5 mm (7016) + Słupek 200 cm 1,5 mm", price: 115 },
-      "bezpodmur_153_4_1_5": { label: "153 cm fi 4 mm (7016) + Słupek 230 cm 1,5 mm", price: 110 },
-      "bezpodmur_153_5_1_5": { label: "153 cm fi 5 mm (7016) + Słupek 230 cm 1,5 mm", price: 130 },
-      "bezpodmur_173_4_1_5": { label: "173 cm fi 4 mm (7016) + Słupek 260 cm 1,5 mm", price: 125 },
-      "bezpodmur_173_5_1_5": { label: "173 cm fi 5 mm (7016) + Słupek 260 cm 1,5 mm", price: 150 },
-
-      // --- BEZ PODMURÓWKI, słupek 2 mm ---
-      "bezpodmur_123_4_2": { label: "123 cm fi 4 mm (7016) + Słupek 200 cm 2 mm", price: 105 },
-      "bezpodmur_123_5_2": { label: "123 cm fi 5 mm (7016) + Słupek 200 cm 2 mm", price: 120 },
-      "bezpodmur_153_4_2": { label: "153 cm fi 4 mm (7016) + Słupek 230 cm 2 mm", price: 115 },
-      "bezpodmur_153_5_2": { label: "153 cm fi 5 mm (7016) + Słupek 230 cm 2 mm", price: 135 },
-      "bezpodmur_173_4_2": { label: "173 cm fi 4 mm (7016) + Słupek 260 cm 2 mm", price: 130 },
-      "bezpodmur_173_5_2": { label: "173 cm fi 5 mm (7016) + Słupek 260 cm 2 mm", price: 155 }
-    };
-
-    // =========================
-    // CENNIK BRAM PRZESUWNYCH
-    // =========================
-    const GATE_CONFIGS = {
-      // L3m
-      "brama_3_123": { label: "Brama przesuwna 3D Fi4mm L3m x H1,23m OC+RAL", price: 3500 },
-      "brama_3_143": { label: "Brama przesuwna 3D Fi4mm L3m x H1,43m OC+RAL", price: 3800 },
-      "brama_3_173": { label: "Brama przesuwna 3D Fi4mm L3m x H1,73m OC+RAL", price: 4100 },
-      "brama_3_193": { label: "Brama przesuwna 3D Fi4mm L3m x H1,93m OC+RAL", price: 4400 },
-
-      // L3,5m
-      "brama_35_123": { label: "Brama przesuwna 3D Fi4mm L3,5m x H1,23m OC+RAL", price: 4000 },
-      "brama_35_143": { label: "Brama przesuwna 3D Fi4mm L3,5m x H1,43m OC+RAL", price: 4300 },
-      "brama_35_173": { label: "Brama przesuwna 3D Fi4mm L3,5m x H1,73m OC+RAL", price: 4600 },
-      "brama_35_193": { label: "Brama przesuwna 3D Fi4mm L3,5m x H1,93m OC+RAL", price: 4900 },
-
-      // L4m
-      "brama_4_123": { label: "Brama przesuwna 3D Fi4mm L4m x H1,23m OC+RAL", price: 4500 },
-      "brama_4_143": { label: "Brama przesuwna 3D Fi4mm L4m x H1,43m OC+RAL", price: 4800 },
-      "brama_4_173": { label: "Brama przesuwna 3D Fi4mm L4m x H1,73m OC+RAL", price: 5100 },
-      "brama_4_193": { label: "Brama przesuwna 3D Fi4mm L4m x H1,93m OC+RAL", price: 5400 },
-
-      // L4,5m
-      "brama_45_123": { label: "Brama przesuwna 3D Fi4mm L4,5m x H1,23m OC+RAL", price: 5000 },
-      "brama_45_143": { label: "Brama przesuwna 3D Fi4mm L4,5m x H1,43m OC+RAL", price: 5300 },
-      "brama_45_173": { label: "Brama przesuwna 3D Fi4mm L4,5m x H1,73m OC+RAL", price: 5600 },
-      "brama_45_193": { label: "Brama przesuwna 3D Fi4mm L4,5m x H1,93m OC+RAL", price: 5900 },
-
-      // L5m
-      "brama_5_123": { label: "Brama przesuwna 3D Fi4mm L5m x H1,23m OC+RAL", price: 5500 },
-      "brama_5_143": { label: "Brama przesuwna 3D Fi4mm L5m x H1,43m OC+RAL", price: 5800 },
-      "brama_5_173": { label: "Brama przesuwna 3D Fi4mm L5m x H1,73m OC+RAL", price: 6100 },
-      "brama_5_193": { label: "Brama przesuwna 3D Fi4mm L5m x H1,93m OC+RAL", price: 6400 },
-
-      // L5,5m
-      "brama_55_123": { label: "Brama przesuwna 3D Fi4mm L5,5m x H1,23m OC+RAL", price: 6000 },
-      "brama_55_143": { label: "Brama przesuwna 3D Fi4mm L5,5m x H1,43m OC+RAL", price: 6300 },
-      "brama_55_173": { label: "Brama przesuwna 3D Fi4mm L5,5m x H1,73m OC+RAL", price: 6600 },
-      "brama_55_193": { label: "Brama przesuwna 3D Fi4mm L5,5m x H1,93m OC+RAL", price: 6900 },
-
-      // L6m
-      "brama_6_123": { label: "Brama przesuwna 3D Fi4mm L6m x H1,23m OC+RAL", price: 7500 },
-      "brama_6_143": { label: "Brama przesuwna 3D Fi4mm L6m x H1,43m OC+RAL", price: 8000 },
-      "brama_6_173": { label: "Brama przesuwna 3D Fi4mm L6m x H1,73m OC+RAL", price: 8500 },
-      "brama_6_193": { label: "Brama przesuwna 3D Fi4mm L6m x H1,93m OC+RAL", price: 9000 },
-
-      // L7m
-      "brama_7_123": { label: "Brama przesuwna 3D Fi4mm L7m x H1,23m OC+RAL", price: 11000 },
-      "brama_7_143": { label: "Brama przesuwna 3D Fi4mm L7m x H1,43m OC+RAL", price: 12000 },
-      "brama_7_173": { label: "Brama przesuwna 3D Fi4mm L7m x H1,73m OC+RAL", price: 13000 },
-      "brama_7_193": { label: "Brama przesuwna 3D Fi4mm L7m x H1,93m OC+RAL", price: 14000 },
-
-      // L8m
-      "brama_8_123": { label: "Brama przesuwna 3D Fi4mm L8m x H1,23m OC+RAL", price: 12000 },
-      "brama_8_143": { label: "Brama przesuwna 3D Fi4mm L8m x H1,43m OC+RAL", price: 13000 },
-      "brama_8_173": { label: "Brama przesuwna 3D Fi4mm L8m x H1,73m OC+RAL", price: 14000 },
-      "brama_8_193": { label: "Brama przesuwna 3D Fi4mm L8m x H1,93m OC+RAL", price: 15000 }
-    };
-
-    const STORAGE_KEY = "baza_klientow_ogrodzeniowa_v3";
-    const SETTINGS_KEY = "baza_ogrodzeniowa_settings_v2";
-
-    let clients = [];
-    let editIndex = null;
-
-    let settings = {
-      defaultDepositPercent: 30,
-      defaultPaymentMethod: ""
-    };
-
-    let currentSearch = "";
-    let currentCityFilter = "all";
-
-    const form = document.getElementById("client-form");
-    const tbodyActive = document.getElementById("clients-active-body");
-    const tbodyPotential = document.getElementById("clients-potential-body");
-    const tbodyInactive = document.getElementById("clients-inactive-body");
-    const panelSelect = document.getElementById("panelConfig");
-    const gateSelect = document.getElementById("gateConfig");
-    const panelPriceInput = document.getElementById("panelPricePerMb");
-    const gatePriceInput = document.getElementById("gatePricePerGate");
-    const calcBtn = document.getElementById("calcBtn");
-    const calcPreview = document.getElementById("calcPreview");
-    const exportCsvBtn = document.getElementById("exportCsvBtn");
-    const printOfferBtn = document.getElementById("printOfferBtn");
-    const searchInput = document.getElementById("searchInput");
-    const cityFilterSelect = document.getElementById("cityFilter");
-    const orderStatusSelect = document.getElementById("orderStatus");
-    const statusClientSelect = document.getElementById("statusClient");
-
-    // ====== SETTINGS ======
-    function loadSettings() {
-      const stored = localStorage.getItem(SETTINGS_KEY);
-      if (stored) {
-        try {
-          const obj = JSON.parse(stored);
-          Object.assign(settings, obj || {});
-        } catch (e) {}
-      }
-    }
-
-    function saveSettings() {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    }
-
-    function applySettingsToSettingsForm() {
-      document.getElementById("settingsDepositPercent").value = settings.defaultDepositPercent || 30;
-      document.getElementById("settingsPaymentMethod").value = settings.defaultPaymentMethod || "";
-    }
-
-    function applySettingsToForm() {
-      document.getElementById("depositPercent").value = settings.defaultDepositPercent || 30;
-      if (settings.defaultPaymentMethod) {
-        document.getElementById("paymentMethod").value = settings.defaultPaymentMethod;
-      }
-    }
-
-    document.getElementById("saveSettingsBtn").addEventListener("click", () => {
-      settings.defaultDepositPercent = Number(document.getElementById("settingsDepositPercent").value || 0) || 0;
-      settings.defaultPaymentMethod = document.getElementById("settingsPaymentMethod").value || "";
-      saveSettings();
-      applySettingsToForm();
-      alert("Zapisano ustawienia domyślne.");
-    });
-
-    // ====== AUTO: ZAKOŃCZONE -> NIEAKTYWNY ======
-    orderStatusSelect.addEventListener("change", () => {
-      if (orderStatusSelect.value === "zakończone") {
-        statusClientSelect.value = "nieaktywny";
-      }
-    });
-
-    // ====== STORAGE KLIENTÓW ======
-    function loadClients() {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          clients = JSON.parse(stored) || [];
-        } catch (e) {
-          clients = [];
-        }
-      }
-    }
-
-    function saveClients() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
-    }
-
-    function formatMoney(v) {
-      if (v === "" || v === null || isNaN(v)) return "";
-      return Number(v).toFixed(2);
-    }
-
-    // ====== SELECTY PANELI I BRAM ======
-    function initSelects() {
-      panelSelect.innerHTML = '<option value="">– wybierz konfigurację paneli –</option>';
-      Object.entries(PANEL_CONFIGS).forEach(([key, cfg]) => {
-        const opt = document.createElement("option");
-        opt.value = key;
-        opt.textContent = cfg.label + " – " + cfg.price + " zł/mb";
-        panelSelect.appendChild(opt);
-      });
-
-      gateSelect.innerHTML = '<option value="">– wybierz bramę przesuwną –</option>';
-      Object.entries(GATE_CONFIGS).forEach(([key, cfg]) => {
-        const opt = document.createElement("option");
-        opt.value = key;
-        opt.textContent = cfg.label + " – " + cfg.price + " zł/szt.";
-        gateSelect.appendChild(opt);
-      });
-    }
-
-    panelSelect.addEventListener("change", () => {
-      const key = panelSelect.value;
-      const cfg = PANEL_CONFIGS[key];
-      if (cfg) panelPriceInput.value = cfg.price;
-      recalculate(true);
-    });
-
-    gateSelect.addEventListener("change", () => {
-      const key = gateSelect.value;
-      const cfg = GATE_CONFIGS[key];
-      if (cfg) gatePriceInput.value = cfg.price;
-      recalculate(true);
-    });
-
-    // ====== FILTR MIAST ======
-    function updateCityFilterOptions() {
-      const prev = currentCityFilter;
-      const cities = [...new Set(
-        clients
-          .map(c => (c.city || "").trim())
-          .filter(c => c.length > 0)
-      )].sort((a, b) => a.localeCompare(b, "pl"));
-
-      cityFilterSelect.innerHTML = '<option value="all">wszystkie</option>';
-      cities.forEach(city => {
-        const opt = document.createElement("option");
-        opt.value = city;
-        opt.textContent = city;
-        cityFilterSelect.appendChild(opt);
-      });
-
-      if (prev && (prev === "all" || cities.some(c => c.toLowerCase() === prev.toLowerCase()))) {
-        cityFilterSelect.value = prev;
-      } else {
-        currentCityFilter = "all";
-        cityFilterSelect.value = "all";
-      }
-    }
-
-    cityFilterSelect.addEventListener("change", () => {
-      currentCityFilter = cityFilterSelect.value || "all";
-      renderTable();
-    });
-
-    searchInput.addEventListener("input", () => {
-      currentSearch = searchInput.value.toLowerCase();
-      renderTable();
-    });
-
-    // ====== RYSOWANIE TABEL ======
-    function makeRowHTML(c, index) {
-      const total = Number(c.totalAmount || 0);
-      const deposit = Number(c.deposit || 0);
-      const due = total - deposit;
-
-      return `
-        <td>${index + 1}</td>
-        <td>${c.firstName || ""}</td>
-        <td>${c.lastNameOrCompany || ""}</td>
-        <td>${c.phone || ""}</td>
-        <td>${c.email || ""}</td>
-        <td>${c.street || ""}</td>
-        <td>${c.postalCode || ""}</td>
-        <td>${c.city || ""}</td>
-        <td>${c.panelConfigLabel || ""}</td>
-        <td>${c.panelLengthMb || ""}</td>
-        <td>${formatMoney(c.panelPricePerMb)}</td>
-        <td>${c.gateConfigLabel || ""}</td>
-        <td>${c.gateCount || ""}</td>
-        <td>${formatMoney(c.gatePricePerGate)}</td>
-        <td>${c.discountPercent || 0}</td>
-        <td>${c.gateDiscountPercent || 0}</td>
-        <td>${formatMoney(c.totalAmount)}</td>
-        <td>${formatMoney(c.deposit)}</td>
-        <td>${formatMoney(due)}</td>
-        <td>${c.paymentMethod || ""}</td>
-        <td>${c.statusClient || ""}</td>
-        <td>${c.orderStatus || ""}</td>
-        <td>${c.plannedDate || ""}</td>
-        <td>${c.firstContactDate || ""}</td>
-        <td>${c.terrainType || ""}</td>
-        <td>${c.measurementNotes || ""}</td>
-        <td>${c.notes || ""}</td>
-        <td class="actions">
-          <button data-action="edit" data-index="${index}">Edytuj</button>
-          <button data-action="delete" data-index="${index}">Usuń</button>
-        </td>
-      `;
-    }
-
-    function renderTable() {
-      tbodyActive.innerHTML = "";
-      tbodyPotential.innerHTML = "";
-      tbodyInactive.innerHTML = "";
-
-      updateCityFilterOptions();
-
-      clients.forEach((c, index) => {
-        const status = (c.statusClient || "").toLowerCase();
-
-        // FILTROWANIE po mieście
-        const city = (c.city || "").trim();
-        if (currentCityFilter !== "all" && city.toLowerCase() !== currentCityFilter.toLowerCase()) {
-          return;
-        }
-
-        // WYSZUKIWANIE tekstowe
-        if (currentSearch) {
-          const hay = [
-            c.firstName,
-            c.lastNameOrCompany,
-            c.phone,
-            c.email,
-            c.city,
-            c.street,
-            c.notes,
-            c.measurementNotes
-          ].join(" ").toLowerCase();
-          if (!hay.includes(currentSearch)) return;
-        }
-
-        const tr = document.createElement("tr");
-        if (status === "aktywny") tr.className = "status-aktywny";
-        else if (status === "potencjalny") tr.className = "status-potencjalny";
-        else tr.className = "status-nieaktywny";
-
-        tr.innerHTML = makeRowHTML(c, index);
-
-        if (status === "aktywny") {
-          tbodyActive.appendChild(tr);
-        } else if (status === "potencjalny") {
-          tbodyPotential.appendChild(tr);
-        } else {
-          tbodyInactive.appendChild(tr);
-        }
-      });
-    }
-
-    function clearForm() {
-      form.reset();
-      editIndex = null;
-      calcPreview.textContent = "";
-      document.getElementById("totalAmount").value = "";
-      document.getElementById("deposit").value = "";
-      applySettingsToForm();
-    }
-
-    document.getElementById("clearForm").addEventListener("click", clearForm);
-
-    // ====== KALKULATOR ======
-    function recalculate(silent = false) {
-      const panelLength = Number(document.getElementById("panelLengthMb").value || 0);
-      const panelPrice = Number(panelPriceInput.value || 0);
-      const gateCount = Number(document.getElementById("gateCount").value || 0);
-      const gatePrice = Number(gatePriceInput.value || 0);
-      const discountPanelsPercent = Number(document.getElementById("discountPercent").value || 0);
-      const discountGatesPercent = Number(document.getElementById("gateDiscountPercent").value || 0);
-      const depositPercent = Number(document.getElementById("depositPercent").value || 0);
-
-      const grossPanels = panelLength && panelPrice ? panelLength * panelPrice : 0;
-      const grossGates = gateCount && gatePrice ? gateCount * gatePrice : 0;
-      const grossAll = grossPanels + grossGates;
-
-      if (!grossAll) {
-        if (!silent) {
-          alert("Podaj przynajmniej panele (mb i cenę) lub bramy (ilość i cenę).");
-        }
-        document.getElementById("totalAmount").value = "";
-        document.getElementById("deposit").value = "";
-        calcPreview.textContent = "";
-        return;
-      }
-
-      const discountPanelsAmount = grossPanels * (discountPanelsPercent / 100);
-      const discountGatesAmount = grossGates * (discountGatesPercent / 100);
-
-      const netPanels = grossPanels - discountPanelsAmount;
-      const netGates = grossGates - discountGatesAmount;
-      const total = netPanels + netGates;
-
-      let deposit = 0;
-      if (depositPercent > 0) {
-        deposit = total * (depositPercent / 100);
-      }
-
-      document.getElementById("totalAmount").value = total.toFixed(2);
-      document.getElementById("deposit").value = deposit ? deposit.toFixed(2) : "";
-
-      const due = total - deposit;
-      calcPreview.textContent =
-        `Panele: brutto ${grossPanels.toFixed(2)} PLN, rabat paneli ${discountPanelsAmount.toFixed(2)} PLN, netto ${netPanels.toFixed(2)} PLN; ` +
-        `Bramy: brutto ${grossGates.toFixed(2)} PLN, rabat bram ${discountGatesAmount.toFixed(2)} PLN, netto ${netGates.toFixed(2)} PLN; ` +
-        `Razem po rabatach: ${total.toFixed(2)} PLN; Zaliczka: ${deposit.toFixed(2)} PLN; Do zapłaty: ${due.toFixed(2)} PLN.`;
-    }
-
-    calcBtn.addEventListener("click", () => recalculate(false));
-
-    const recalcInputsIds = [
-      "panelLengthMb", "panelPricePerMb",
-      "gateCount", "gatePricePerGate",
-      "discountPercent", "gateDiscountPercent",
-      "depositPercent"
-    ];
-    recalcInputsIds.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener("input", () => recalculate(true));
-      }
-    });
-
-    // ====== DRUK OFERTY ======
-    printOfferBtn.addEventListener("click", () => {
-      recalculate(true); // upewnij się, że wszystko aktualne
-      const total = document.getElementById("totalAmount").value;
-      if (!total) {
-        alert("Najpierw przelicz cenę (ustaw dane i kliknij PRZELICZ).");
-        return;
-      }
-
-      const firstName = document.getElementById("firstName").value || "";
-      const lastNameOrCompany = document.getElementById("lastNameOrCompany").value || "";
-      const clientName = (firstName + " " + (lastNameOrCompany || "")).trim();
-
-      const street = document.getElementById("street").value || "";
-      const postalCode = document.getElementById("postalCode").value || "";
-      const city = document.getElementById("city").value || "";
-      const phone = document.getElementById("phone").value || "";
-      const email = document.getElementById("email").value || "";
-
-      const panelConfigLabel = (PANEL_CONFIGS[document.getElementById("panelConfig").value] || {}).label || "";
-      const panelLength = document.getElementById("panelLengthMb").value || "";
-      const panelPrice = document.getElementById("panelPricePerMb").value || "";
-
-      const gateConfigLabel = (GATE_CONFIGS[document.getElementById("gateConfig").value] || {}).label || "";
-      const gateCount = document.getElementById("gateCount").value || "";
-      const gatePrice = document.getElementById("gatePricePerGate").value || "";
-
-      const discountPanelsPercent = document.getElementById("discountPercent").value || "0";
-      const discountGatesPercent = document.getElementById("gateDiscountPercent").value || "0";
-      const deposit = document.getElementById("deposit").value || "0";
-      const depositPercent = document.getElementById("depositPercent").value || "0";
-      const paymentMethod = document.getElementById("paymentMethod").value || "";
-      const plannedDate = document.getElementById("plannedDate").value || "";
-      const orderStatus = document.getElementById("orderStatus").value || "";
-      const terrainType = document.getElementById("terrainType").value || "";
-      const measurementNotes = document.getElementById("measurementNotes").value || "";
-      const notes = document.getElementById("notes").value || "";
-
-      const due = (Number(total) - Number(deposit || 0)).toFixed(2);
-
-      const win = window.open("", "_blank");
-      if (!win) {
-        alert("Przeglądarka zablokowała okno. Pozwól na wyskakujące okna, aby wydrukować ofertę.");
-        return;
-      }
-
-      win.document.write(`
-        <!DOCTYPE html>
-        <html lang="pl">
-        <head>
-          <meta charset="UTF-8" />
-          <title>Oferta – ${clientName}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
-            h1 { font-size: 20px; margin-bottom: 5px; }
-            h2 { font-size: 16px; margin-top: 20px; margin-bottom: 5px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #ccc; padding: 4px; text-align: left; font-size: 12px; }
-            th { background: #f0f0f0; }
-            .section { margin-top: 15px; }
-          </style>
-        </head>
-        <body>
-          <h1>Oferta na wykonanie ogrodzenia</h1>
-          <div>Data sporządzenia: ${new Date().toLocaleDateString("pl-PL")}</div>
-
-          <div class="section">
-            <h2>Dane klienta</h2>
-            <p>
-              <strong>${clientName || "(brak)"}</strong><br/>
-              ${street || ""}<br/>
-              ${postalCode || ""} ${city || ""}<br/>
-              Tel: ${phone || ""}<br/>
-              E-mail: ${email || ""}
-            </p>
-          </div>
-
-          <div class="section">
-            <h2>Zakres prac</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Pozycja</th>
-                  <th>Opis</th>
-                  <th>Ilość</th>
-                  <th>Stawka</th>
-                  <th>Uwagi</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>1</td>
-                  <td>${panelConfigLabel || "Panele ogrodzeniowe"}</td>
-                  <td>${panelLength ? panelLength + " mb" : "-"}</td>
-                  <td>${panelPrice ? panelPrice + " zł/mb" : "-"}</td>
-                  <td>Rabat na panele: ${discountPanelsPercent}%</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>${gateConfigLabel || "Brama przesuwna"}</td>
-                  <td>${gateCount ? gateCount + " szt." : "-"}</td>
-                  <td>${gatePrice ? gatePrice + " zł/szt." : "-"}</td>
-                  <td>Rabat na bramy: ${discountGatesPercent}%</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="section">
-            <h2>Podsumowanie</h2>
-            <table>
-              <tbody>
-                <tr>
-                  <th>Kwota całkowita po rabatach</th>
-                  <td>${Number(total).toFixed(2)} PLN</td>
-                </tr>
-                <tr>
-                  <th>Zaliczka (${depositPercent}%)</th>
-                  <td>${Number(deposit || 0).toFixed(2)} PLN</td>
-                </tr>
-                <tr>
-                  <th>Do zapłaty po zaliczce</th>
-                  <td>${due} PLN</td>
-                </tr>
-                <tr>
-                  <th>Forma płatności</th>
-                  <td>${paymentMethod || "-"}</td>
-                </tr>
-                <tr>
-                  <th>Planowany termin montażu</th>
-                  <td>${plannedDate || "-"}</td>
-                </tr>
-                <tr>
-                  <th>Status zlecenia</th>
-                  <td>${orderStatus || "-"}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="section">
-            <h2>Uwagi techniczne</h2>
-            <p><strong>Podłoże / teren:</strong> ${terrainType || "-"}</p>
-            <p>${measurementNotes ? measurementNotes.replace(/\\n/g, "<br/>") : ""}</p>
-          </div>
-
-          <div class="section">
-            <h2>Uwagi dodatkowe</h2>
-            <p>${notes ? notes.replace(/\\n/g, "<br/>") : "-"}</p>
-          </div>
-
-          <div class="section" style="margin-top:25px;">
-            .......................................................<br/>
-            Podpis wykonawcy / osoby przyjmującej zlecenie
-          </div>
-        </body>
-        </html>
-      `);
-
-      win.document.close();
-      win.focus();
-      win.print();
-    });
-
-    // ====== OBSŁUGA FORMULARZA (ZAPIS / EDIKCJA) ======
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const panelKey = panelSelect.value;
-      const panelCfg = PANEL_CONFIGS[panelKey] || {};
-      const gateKey = gateSelect.value;
-      const gateCfg = GATE_CONFIGS[gateKey] || {};
-
-      const client = {
-        firstName: document.getElementById("firstName").value,
-        lastNameOrCompany: document.getElementById("lastNameOrCompany").value,
-        phone: document.getElementById("phone").value,
-        email: document.getElementById("email").value,
-        street: document.getElementById("street").value,
-        postalCode: document.getElementById("postalCode").value,
-        city: document.getElementById("city").value,
-        statusClient: document.getElementById("statusClient").value,
-        firstContactDate: document.getElementById("firstContactDate").value,
-
-        plannedDate: document.getElementById("plannedDate").value,
-        orderStatus: document.getElementById("orderStatus").value,
-        terrainType: document.getElementById("terrainType").value,
-
-        panelConfigKey: panelKey,
-        panelConfigLabel: panelCfg.label || "",
-        panelLengthMb: document.getElementById("panelLengthMb").value,
-        panelPricePerMb: document.getElementById("panelPricePerMb").value,
-
-        gateConfigKey: gateKey,
-        gateConfigLabel: gateCfg.label || "",
-        gateCount: document.getElementById("gateCount").value,
-        gatePricePerGate: document.getElementById("gatePricePerGate").value,
-
-        discountPercent: document.getElementById("discountPercent").value,
-        gateDiscountPercent: document.getElementById("gateDiscountPercent").value,
-        depositPercent: document.getElementById("depositPercent").value,
-        totalAmount: document.getElementById("totalAmount").value,
-        deposit: document.getElementById("deposit").value,
-        paymentMethod: document.getElementById("paymentMethod").value,
-
-        measurementNotes: document.getElementById("measurementNotes").value,
-        notes: document.getElementById("notes").value
-      };
-
-      // AUTOMATYCZNIE: jeśli zlecenie zakończone -> klient nieaktywny
-      if (client.orderStatus && client.orderStatus.toLowerCase() === "zakończone") {
-        client.statusClient = "nieaktywny";
-      }
-
-      if (editIndex !== null) {
-        clients[editIndex] = client;
-      } else {
-        clients.push(client);
-      }
-
-      saveClients();
-      renderTable();
-      clearForm();
-    });
-
-    function rowClickHandler(e) {
-      const btn = e.target;
-      if (!btn.dataset.action) return;
-      const index = Number(btn.dataset.index);
-
-      if (btn.dataset.action === "delete") {
-        if (confirm("Usunąć tego klienta?")) {
-          clients.splice(index, 1);
-          saveClients();
-          renderTable();
-        }
-      }
-
-      if (btn.dataset.action === "edit") {
-        const c = clients[index];
-        editIndex = index;
-
-        document.getElementById("firstName").value = c.firstName || "";
-        document.getElementById("lastNameOrCompany").value = c.lastNameOrCompany || "";
-        document.getElementById("phone").value = c.phone || "";
-        document.getElementById("email").value = c.email || "";
-        document.getElementById("street").value = c.street || "";
-        document.getElementById("postalCode").value = c.postalCode || "";
-        document.getElementById("city").value = c.city || "";
-        document.getElementById("statusClient").value = c.statusClient || "aktywny";
-        document.getElementById("firstContactDate").value = c.firstContactDate || "";
-        document.getElementById("plannedDate").value = c.plannedDate || "";
-        document.getElementById("orderStatus").value = c.orderStatus || "";
-        document.getElementById("terrainType").value = c.terrainType || "";
-
-        panelSelect.value = c.panelConfigKey || "";
-        gateSelect.value = c.gateConfigKey || "";
-
-        if (c.panelPricePerMb) {
-          panelPriceInput.value = c.panelPricePerMb;
-        } else if (PANEL_CONFIGS[c.panelConfigKey]) {
-          panelPriceInput.value = PANEL_CONFIGS[c.panelConfigKey].price;
-        } else {
-          panelPriceInput.value = "";
-        }
-
-        if (c.gatePricePerGate) {
-          gatePriceInput.value = c.gatePricePerGate;
-        } else if (GATE_CONFIGS[c.gateConfigKey]) {
-          gatePriceInput.value = GATE_CONFIGS[c.gateConfigKey].price;
-        } else {
-          gatePriceInput.value = "";
-        }
-
-        document.getElementById("panelLengthMb").value = c.panelLengthMb || "";
-        document.getElementById("gateCount").value = c.gateCount || "";
-        document.getElementById("discountPercent").value = c.discountPercent || 0;
-        document.getElementById("gateDiscountPercent").value = c.gateDiscountPercent || 0;
-        document.getElementById("depositPercent").value = c.depositPercent || settings.defaultDepositPercent || 30;
-        document.getElementById("totalAmount").value = c.totalAmount || "";
-        document.getElementById("deposit").value = c.deposit || "";
-        document.getElementById("paymentMethod").value = c.paymentMethod || settings.defaultPaymentMethod || "";
-
-        document.getElementById("measurementNotes").value = c.measurementNotes || "";
-        document.getElementById("notes").value = c.notes || "";
-
-        calcPreview.textContent = "";
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-    }
-
-    tbodyActive.addEventListener("click", rowClickHandler);
-    tbodyPotential.addEventListener("click", rowClickHandler);
-    tbodyInactive.addEventListener("click", rowClickHandler);
-
-    // ====== EKSPORT CSV ======
-    function exportToCsv() {
-      if (clients.length === 0) {
-        alert("Brak danych do eksportu.");
-        return;
-      }
-
-      const header = [
-        "ID",
-        "Imię",
-        "Nazwisko_Firma",
-        "Telefon",
-        "E_mail",
-        "Ulica",
-        "Kod_pocztowy",
-        "Miasto",
-        "Konfiguracja_paneli",
-        "Mb_paneli",
-        "Cena_mb_paneli",
-        "Konfiguracja_bramy",
-        "Ilosc_bram",
-        "Cena_za_brame",
-        "Rabat_paneli_%", 
-        "Rabat_bram_%", 
-        "Kwota_po_rabatach",
-        "Zaliczka",
-        "Do_zaplaty",
-        "Forma_platnosci",
-        "Status_klienta",
-        "Status_zlecenia",
-        "Planowany_termin",
-        "Data_pierwszego_kontaktu",
-        "Typ_podloza",
-        "Uwagi_techniczne",
-        "Uwagi_ogolne"
-      ];
-
-      const rows = clients.map((c, index) => {
-        const total = Number(c.totalAmount || 0);
-        const deposit = Number(c.deposit || 0);
-        const due = total - deposit;
-
-        return [
-          index + 1,
-          c.firstName || "",
-          c.lastNameOrCompany || "",
-          c.phone || "",
-          c.email || "",
-          c.street || "",
-          c.postalCode || "",
-          c.city || "",
-          c.panelConfigLabel || "",
-          c.panelLengthMb || "",
-          c.panelPricePerMb || "",
-          c.gateConfigLabel || "",
-          c.gateCount || "",
-          c.gatePricePerGate || "",
-          c.discountPercent || 0,
-          c.gateDiscountPercent || 0,
-          total.toFixed ? total.toFixed(2) : total,
-          deposit.toFixed ? deposit.toFixed(2) : deposit,
-          due.toFixed ? due.toFixed(2) : due,
-          c.paymentMethod || "",
-          c.statusClient || "",
-          c.orderStatus || "",
-          c.plannedDate || "",
-          c.firstContactDate || "",
-          c.terrainType || "",
-          (c.measurementNotes || "").replace(/\r?\n/g, " "),
-          (c.notes || "").replace(/\r?\n/g, " ")
-        ];
-      });
-
-      const csvContent = [header, ...rows]
-        .map(row =>
-          row
-            .map(val => `"${String(val).replace(/"/g, '""')}"`)
-            .join(",")
-        )
-        .join("\r\n");
-
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "baza_klientow_ogrodzenia.csv";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    exportCsvBtn.addEventListener("click", exportToCsv);
-
-    // ====== INIT ======
-    loadSettings();
-    applySettingsToSettingsForm();
-    initSelects();
-    loadClients();
-    renderTable();
-    applySettingsToForm();
-  </script>
-
-  <!-- REJESTRACJA SERVICE WORKERA (PWA) -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js").catch(function (error) {
-        console.log("ServiceWorker – błąd rejestracji:", error);
-      });
-    }
-  </script>
+  <div class="card">
+    <h2>Dokumenty i eksport</h2>
+    <div class="row">
+      <button id="exportJsonBtn" type="button">Eksport JSON</button>
+      <button id="exportCsvBtn" type="button">Eksport CSV</button>
+      <input id="importJsonInput" type="file" accept="application/json" />
+      <button id="clearDbBtn" type="button">Wyczyść bazę</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Przegląd i sortowanie</h2>
+    <div class="row">
+      <select id="sortBy"><option value="id">Sortuj: ID</option><option value="installDate">Sortuj: termin montażu</option><option value="clientName">Sortuj: klient</option><option value="toPay">Sortuj: do zapłaty</option></select>
+      <select id="sortDir"><option value="asc">Rosnąco</option><option value="desc">Malejąco</option></select>
+      <button id="applySortBtn" type="button">Zastosuj</button>
+    </div>
+
+    <h3 class="section-ready">Gotowe do montażu</h3>
+    <table><thead><tr><th>ID</th><th>Klient</th><th>Status</th><th>Ekipa</th><th>Termin</th><th>Do zapłaty</th><th>Checklista</th><th>Akcje</th></tr></thead><tbody id="readyBody"></tbody></table>
+
+    <h3 class="section-todo">Do ogarnięcia</h3>
+    <table><thead><tr><th>ID</th><th>Klient</th><th>Status</th><th>Ekipa</th><th>Termin</th><th>Do zapłaty</th><th>Checklista</th><th>Akcje</th></tr></thead><tbody id="todoBody"></tbody></table>
+
+    <h3 class="section-done">Zakończone / rozliczone</h3>
+    <table><thead><tr><th>ID</th><th>Klient</th><th>Status</th><th>Ekipa</th><th>Termin</th><th>Do zapłaty</th><th>Checklista</th><th>Akcje</th></tr></thead><tbody id="doneBody"></tbody></table>
+  </div>
+</div>
+
+<script>
+const DEFAULT_PRICE = {
+  panel: { '123|4':39.5, '153|4':47.0, '173|4':54.5, '123|5':58.0, '153|5':69.0, '173|5':82.5 },
+  post: { '1.0|200':15.5,'1.0|230':17.82,'1.0|260':20.15,'1.2|200':21.89,'1.2|230':25.18,'1.2|260':28.46,'1.5|200':27.06,'1.5|230':31.12,'1.5|260':35.18,'2.0|200':33.21,'2.0|230':38.19,'2.0|260':43.17 },
+  accessory: { clamp:1.66, cap:0.37, channel:3.69 }
+};
+let pricing = JSON.parse(localStorage.getItem('pricing')||'null') || structuredClone(DEFAULT_PRICE);
+let orders = JSON.parse(localStorage.getItem('orders')||'[]');
+let editId = null;
+
+const el = id => document.getElementById(id);
+const money = n => Number(n||0).toFixed(2);
+const download = (name, text, type='text/plain') => { const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; a.click(); URL.revokeObjectURL(a.href); };
+
+function renderPriceInputs(){
+  const g = el('priceGrid'); g.innerHTML='';
+  const fields=[
+    ['panel.123|4','Panel 123 cm fi4'],['panel.153|4','Panel 153 cm fi4'],['panel.173|4','Panel 173 cm fi4'],
+    ['panel.123|5','Panel 123 cm fi5'],['panel.153|5','Panel 153 cm fi5'],['panel.173|5','Panel 173 cm fi5'],
+    ['post.1.0|200','Słupek 1.0/200'],['post.1.0|230','Słupek 1.0/230'],['post.1.0|260','Słupek 1.0/260'],
+    ['post.1.2|200','Słupek 1.2/200'],['post.1.2|230','Słupek 1.2/230'],['post.1.2|260','Słupek 1.2/260'],
+    ['post.1.5|200','Słupek 1.5/200'],['post.1.5|230','Słupek 1.5/230'],['post.1.5|260','Słupek 1.5/260'],
+    ['post.2.0|200','Słupek 2.0/200'],['post.2.0|230','Słupek 2.0/230'],['post.2.0|260','Słupek 2.0/260'],
+    ['accessory.clamp','Obejma'],['accessory.cap','Daszek 60x40'],['accessory.channel','Ceownik 25 cm']
+  ];
+  fields.forEach(([path,label])=>{
+    const [a,b]=path.split('.');
+    const wrap=document.createElement('div');
+    wrap.innerHTML=`<label>${label}</label><input data-path="${path}" type="number" step="0.01" value="${pricing[a][b]}">`;
+    g.appendChild(wrap);
+  });
+}
+
+function nextId(){ const n=(Number(localStorage.getItem('orderSeq')||1000)+1); localStorage.setItem('orderSeq',n); return `ZL-${n}`; }
+function resetForm(){ editId=null; el('orderForm').reset(); el('orderId').value=nextId(); el('depositPaid').value=0; el('labor').value=0; el('extra').value=0; el('length').value=0; el('foundation').value=0; el('foundationPrice').value=25; el('summary').value=''; toggleDynamic(); }
+function checklist(o){ return `${o.check.before?'✓':'✗'} / ${o.check.during?'✓':'✗'} / ${o.check.after?'✓':'✗'}`; }
+
+function calcCosts(){
+  const length=Number(el('length').value||0);
+  const panelPrice=pricing.panel[`${el('panelHeight').value}|${el('wire').value}`]||0;
+  const panelCount=Math.ceil(length/2.5);
+  const postPrice=pricing.post[el('post').value]||0;
+  const postCount=panelCount+1;
+  const clamp=panelCount*4*pricing.accessory.clamp;
+  const cap=postCount*pricing.accessory.cap;
+  const channel=Number(el('foundation').value||0)*pricing.accessory.channel;
+  const fence = panelCount*panelPrice + postCount*postPrice + clamp + cap + channel + Number(el('foundation').value||0)*Number(el('foundationPrice').value||0);
+  const gate = el('hasGate').value==='tak' ? Number(el('gateCost').value||0) : 0;
+  const wicket = el('hasWicket').value==='tak' ? Number(el('wicketCost').value||0) : 0;
+  const labor = Number(el('labor').value||0);
+  const extra = Number(el('extra').value||0);
+  const total = fence + gate + wicket + labor + extra;
+  const toPay = total - Number(el('depositPaid').value||0);
+  el('summary').value = `Materiał: ${money(fence)} PLN | Brama: ${money(gate)} | Furtka: ${money(wicket)} | Robocizna: ${money(labor)} | Dodatkowe: ${money(extra)} | RAZEM: ${money(total)} | Do zapłaty: ${money(toPay)}`;
+  return {panelCount,postCount,fence,gate,wicket,labor,extra,total,toPay};
+}
+
+function getFormData(){ const c=calcCosts(); return {
+  id: el('orderId').value, status: el('status').value, section: el('section').value, crew: el('crew').value,
+  clientName: el('clientName').value, phone: el('phone').value, email: el('email').value, address: el('address').value,
+  installDate: el('installDate').value, depositDate: el('depositDate').value, depositPaid:Number(el('depositPaid').value||0), installBlock:el('installBlock').value,
+  fence:{ type:el('fenceType').value, panelHeight:el('panelHeight').value, wire:el('wire').value, post:el('post').value, length:Number(el('length').value||0), foundation:Number(el('foundation').value||0), foundationPrice:Number(el('foundationPrice').value||0), panelCount:c.panelCount, postCount:c.postCount },
+  gate: el('hasGate').value==='tak' ? { type:el('gateType').value, height:Number(el('gateHeight').value||0), width:Number(el('gateWidth').value||0), side:el('gateSide').value, profile:el('gateProfile').value, ready:el('ready').value, cost:Number(el('gateCost').value||0) } : null,
+  wicket: el('hasWicket').value==='tak' ? { type:el('wicketType').value, height:Number(el('wicketHeight').value||0), width:Number(el('wicketWidth').value||0), side:el('wicketSide').value, profile:el('wicketProfile').value, ready:el('ready').value, cost:Number(el('wicketCost').value||0) } : null,
+  costs:{material:c.fence,labor:c.labor,gate:c.gate,wicket:c.wicket,extra:c.extra,total:c.total,toPay:c.toPay},
+  check:{ before:el('cBefore').checked, during:el('cDuring').checked, after:el('cAfter').checked }
+}; }
+
+function renderOrders(){
+  ['readyBody','todoBody','doneBody'].forEach(id=>el(id).innerHTML='');
+  const sortBy=el('sortBy').value, dir=el('sortDir').value==='asc'?1:-1;
+  const sorted=[...orders].sort((a,b)=> ((a[sortBy]??a.costs?.[sortBy]??'') > (b[sortBy]??b.costs?.[sortBy]??'')) ? dir : -dir);
+  sorted.forEach(o=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${o.id}</td><td>${o.clientName}</td><td>${o.status}</td><td>${o.crew}</td><td>${o.installDate||'-'}</td><td>${money(o.costs.toPay)}</td><td>${checklist(o)}</td><td><button data-edit="${o.id}">Edytuj</button><button data-del="${o.id}">Usuń</button></td>`;
+    el(o.section+'Body').appendChild(tr);
+  });
+  localStorage.setItem('orders',JSON.stringify(orders));
+}
+
+function fillForm(o){
+  editId=o.id; el('orderId').value=o.id; el('status').value=o.status; el('section').value=o.section; el('crew').value=o.crew;
+  el('clientName').value=o.clientName; el('phone').value=o.phone; el('email').value=o.email; el('address').value=o.address;
+  el('installDate').value=o.installDate; el('depositDate').value=o.depositDate; el('depositPaid').value=o.depositPaid; el('installBlock').value=o.installBlock;
+  el('fenceType').value=o.fence.type; el('panelHeight').value=o.fence.panelHeight; el('wire').value=o.fence.wire; el('post').value=o.fence.post;
+  el('length').value=o.fence.length; el('foundation').value=o.fence.foundation; el('foundationPrice').value=o.fence.foundationPrice; el('labor').value=o.costs.labor; el('extra').value=o.costs.extra;
+  el('hasGate').value=o.gate?'tak':'nie'; el('hasWicket').value=o.wicket?'tak':'nie';
+  if(o.gate){ el('gateType').value=o.gate.type; el('gateHeight').value=o.gate.height; el('gateWidth').value=o.gate.width; el('gateSide').value=o.gate.side; el('gateProfile').value=o.gate.profile; el('gateCost').value=o.gate.cost; }
+  if(o.wicket){ el('wicketType').value=o.wicket.type; el('wicketHeight').value=o.wicket.height; el('wicketWidth').value=o.wicket.width; el('wicketSide').value=o.wicket.side; el('wicketProfile').value=o.wicket.profile; el('wicketCost').value=o.wicket.cost; }
+  el('cBefore').checked=o.check.before; el('cDuring').checked=o.check.during; el('cAfter').checked=o.check.after; toggleDynamic(); calcCosts();
+}
+
+function toggleDynamic(){ el('gateFields').classList.toggle('hide',el('hasGate').value!=='tak'); el('wicketFields').classList.toggle('hide',el('hasWicket').value!=='tak'); }
+
+el('orderForm').addEventListener('submit',e=>{ e.preventDefault(); const data=getFormData(); if(editId){ const i=orders.findIndex(x=>x.id===editId); orders[i]=data; } else { orders.push(data); } renderOrders(); resetForm(); });
+el('calcBtn').onclick=calcCosts;
+el('clearBtn').onclick=resetForm;
+['hasGate','hasWicket','status'].forEach(id=>el(id).addEventListener('change',toggleDynamic));
+['length','panelHeight','wire','post','foundation','foundationPrice','gateCost','wicketCost','labor','extra','depositPaid'].forEach(id=>el(id).addEventListener('input',calcCosts));
+el('applySortBtn').onclick=renderOrders;
+
+document.body.addEventListener('click',e=>{
+  const ed=e.target.dataset.edit, del=e.target.dataset.del;
+  if(ed){ const o=orders.find(x=>x.id===ed); if(o) fillForm(o); }
+  if(del){ orders=orders.filter(x=>x.id!==del); renderOrders(); }
+});
+
+el('exportJsonBtn').onclick=()=>download('zlecenia.json',JSON.stringify(orders,null,2),'application/json');
+el('exportCsvBtn').onclick=()=>{
+  const h=['id','section','status','clientName','phone','installDate','crew','material','labor','gate','wicket','extra','total','depositPaid','toPay'];
+  const rows=orders.map(o=>[o.id,o.section,o.status,o.clientName,o.phone,o.installDate,o.crew,o.costs.material,o.costs.labor,o.costs.gate,o.costs.wicket,o.costs.extra,o.costs.total,o.depositPaid,o.costs.toPay]);
+  download('zlecenia.csv',[h.join(','),...rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(','))].join('\n'),'text/csv');
+};
+el('importJsonInput').addEventListener('change',async(e)=>{
+  const f=e.target.files[0]; if(!f) return; try{ const data=JSON.parse(await f.text()); if(Array.isArray(data)){ orders=data; renderOrders(); alert('Zaimportowano JSON.'); } }catch{ alert('Błędny plik JSON'); }
+});
+el('clearDbBtn').onclick=()=>{ if(confirm('Usunąć wszystkie zlecenia?')){ orders=[]; renderOrders(); resetForm(); } };
+
+el('savePriceBtn').onclick=()=>{ document.querySelectorAll('#priceGrid input').forEach(i=>{ const [a,b]=i.dataset.path.split('.'); pricing[a][b]=Number(i.value||0); }); localStorage.setItem('pricing',JSON.stringify(pricing)); calcCosts(); alert('Cennik zapisany.'); };
+el('loadPriceBtn').onclick=()=>{ pricing=JSON.parse(localStorage.getItem('pricing')||'null')||pricing; renderPriceInputs(); calcCosts(); };
+el('resetPriceBtn').onclick=()=>{ pricing=structuredClone(DEFAULT_PRICE); renderPriceInputs(); calcCosts(); };
+
+renderPriceInputs(); resetForm(); renderOrders();
+</script>
 </body>
 </html>
